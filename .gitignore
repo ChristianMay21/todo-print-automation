@@ -1,4 +1,4 @@
-# config is gitignored by default to prevent people from accidentally publishing their todoist API token to Github
+# config and tasks.txt are gitignored by default to prevent people from accidentally publishing personal information to a public repository
 config.json
 node_modules/
 tasks.txt
