@@ -1,8 +1,12 @@
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import { writeFile } from "fs";
+import { writeFile, readFileSync } from "fs";
 import { readFile } from "fs/promises";
-import { spawn } from "child_process";
+import { spawn, exec } from "child_process";
 import path from "path";
+import fs from "fs/promises";
+import { fileURLToPath } from "url";
+import { promisify } from "util";
+import libre from "libreoffice-convert";
 
 async function fetchAndPrintTodoList() {
   // Read and parse the config
@@ -27,13 +31,11 @@ async function fetchAndPrintTodoList() {
   // Determine if passed task should be included in the printed task list
   // The requirements here are based on my personal preferences - you may want to modify them
   function includeTask(task) {
-
     //If the task does not have a due date, do not include it in the task list
     if (task.due === null) {
       return false;
     }
 
-    
     const splitTaskString = task.due.date.split("-");
     const taskYear = Number(splitTaskString[0]);
     const taskMonth = Number(splitTaskString[1]);
@@ -101,30 +103,37 @@ async function fetchAndPrintTodoList() {
     return task1DueDate.getHours() - task2DueDate.getHours();
   }
 
-  function print() {
-    // Define the name of the PowerShell script
-    const scriptName = path.join(process.cwd(), "print.ps1");
-
-    // Create a child process to execute the script
-    const child = spawn("powershell.exe", ["-File", scriptName]);
-
-    // Listen for data from the script's stdout
-    child.stdout.on("data", (data) => {
-      console.log(`Script output: ${data.toString()}`);
-    });
-
-    // Listen for errors, if any
-    child.stderr.on("data", (error) => {
-      console.error(`Script error: ${error.toString()}`);
-    });
-
-    // Listen for the script to exit
-    child.on("close", (code) => {
-      if (code === 0) {
-        console.log(`Script completed successfully.`);
-      } else {
-        console.error(`Script exited with code ${code}`);
+  function convertToPdf(rtfPath) {
+    let rtfBuffer = readFileSync(rtfPath);
+    libre.convert(rtfBuffer, "pdf", undefined, (err, data) => {
+      if (err) {
+        console.error(err);
       }
+      writeFile(
+        "tasks.pdf",
+        data,
+        (err) => {
+          if (err) {
+            console.error(err);
+          }
+        },
+        () => {
+          print();
+        }
+      );
+      console.log("Done?");
+    });
+  }
+
+  function print() {
+    const command = `powershell -File print.ps1`;
+
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error("Print error:", error);
+        return;
+      }
+      console.log("RTF sent to printer");
     });
   }
 
@@ -136,6 +145,7 @@ async function fetchAndPrintTodoList() {
 
       // Dates are in standard US format (MM/DD/YYYY)
       let stringOutput = `Date: ${currentMonth}/${currentDay}/${currentYear} \n`;
+      let rtfOutput = String.raw`\f1\fs28\cf1\b Date: ${currentMonth}/${currentDay}/${currentYear} \b0\par \par `;
 
       // When printed, each task is numbered 1, 2, 3...
       //This variable keeps track of the current task index.
@@ -149,16 +159,18 @@ async function fetchAndPrintTodoList() {
         // This block creates the headings for each time grouping
         if (getTimeTaskIsDue(task) !== currentScheduledTime) {
           stringOutput += `\n${getTimeTaskIsDue(task)} \n`;
+          rtfOutput += String.raw`\f1\fs24\cf3\b ${getTimeTaskIsDue(task)} \b0\par\f0\fs20\cf1 `;
           currentScheduledTime = getTimeTaskIsDue(task);
         }
 
         // Add the entry for each individual task
         stringOutput += `${taskNum}. ${task.content}\n`;
+        rtfOutput += String.raw` ${taskNum}. ${task.content}\par `;
         taskNum++;
       }
 
       // Write all tasks to a .txt file - this .txt file will be used by the Powershell script that actually prints the tasks
-      writeFile(
+      /*writeFile(
         "tasks.txt",
         stringOutput,
         (err) => {
@@ -169,6 +181,25 @@ async function fetchAndPrintTodoList() {
         () => {
           // Invoke the powershell script that handles formatting the tasks and printing them
           print();
+        }
+      );*/
+
+      writeFile(
+        "tasks.rtf",
+        String.raw`{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;}{\f1 Arial Black;}{\f2 Arial;}}
+         {\colortbl ;\red0\green0\blue0;\red128\green128\blue128;\red64\green64\blue64;}
+         \paperw2160\margl72\margr72\margt144\margb144
+        ${rtfOutput}
+        }`,
+        (err) => {
+          if (err) {
+            console.error(err);
+          }
+        },
+        () => {
+          // Invoke the powershell script that handles formatting the tasks and printing them
+          //print();
+          convertToPdf("tasks.rtf");
         }
       );
     })

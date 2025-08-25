@@ -5,6 +5,7 @@ This repository contains some scripts that allow you to pull tasks from Todoist 
 The code is configured to pull tasks that are due today or overdue, and print them out grouped by due time. The code in charge of this is fairly simple, and should be somewhat straightforward to customize for your preferences.
 
 # Project background
+
 I'm not fond of recurring tasks - things like remembering to do the laundry over the weekend, or unloading the dishwasher in the morning. So I wanted to have a nice system that would remind me of all of these tasks.
 
 Years ago, I started tracking these tasks on Todoist. Each task has a recurring due date - for example "Every Saturday at 9am". The Todoist app would remind me to do each of these tasks, which was helpful.
@@ -28,12 +29,14 @@ In order for this system to know what tasks you have/have not completed, you sti
 There are two scripts that work together: `index.js` (a JavaScript file) and `print.ps1`, a Powershell script.
 
 The code starts by invoking `index.js`, and goes through these general steps:
+
 1. Pulls your tasks from Todoist
 2. Checks for any tasks that are either A. Overdue, or B. Due sometime today
 3. Groups these tasks by the time of day they are due (if present), and saves these to a .txt file
 4. Invokes `print.ps1`, which grabs the .txt file, formats it for printing using Microsoft Word, and sends it for printing to the default printer.
 
 ## Using this code
+
 Please feel free to clone and customize this code for your own purposes. For anything public-facing, credit to me is not required but would be appreciated.
 
 Please feel free to make pull requests, feature requests, or general suggestions, but please keep in mind that maintaining this repo is something I only do in my spare time, which can be limited. Any requests made rudely will likely be ignored.
@@ -41,11 +44,13 @@ Please feel free to make pull requests, feature requests, or general suggestions
 All use of this code is at-your-own-risk. While I hope to be helpful, I cannot promise any support of this code - this repo purely exists as a starting point for others who wish to build similar projects to mine.
 
 ## System Requirements
+
 This code was originally written for my personal use. As a result, it's only been tested with my own personal system, with my specific receipt printer.
 
 In particular, the code has only been tested:
+
 - With a Windows machine
-- With a valid installation of Microsoft Word (text formatting unfortunately relies on Microsoft word - I'd love to find a way to remove it as a dependency)
+- With a valid installation of LibreOffice, as described [here]. (https://www.npmjs.com/package/libreoffice-convert)
 - I have only tested printing with the Epson TM-T20III ([Amazon link](https://www.amazon.com/gp/product/B07YLSTMCX/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1), not an affiliate link)
 - The receipt printer must be configured as your default printer
 
@@ -54,6 +59,7 @@ It may be possible to run this code on a non-Windows machine, since Powershell i
 While the code is intended for - any only tested with - printing with a receipt printer, it should be fairly straightforward to modify it for use with traditional printers (see comments in `print.ps1` for some values you may need to tweak)
 
 ## Setting up this repository
+
 - Make sure you have Node.js installed. If you install Node.js fresh, and it asks you if you should add it to the Path variable, say 'yes'.
 - Clone this repo
 - Make a copy of `exampleConfig.json` called `config.json`
@@ -62,14 +68,17 @@ While the code is intended for - any only tested with - printing with a receipt 
 - Run `npm install` to download and install required Node modules.
 
 ## Running this code manually
+
 To run this code manually, simply run `node index.js` from this project's root folder.
 
 ## Running this code automatically (on Windows)
+
 I have this code configured to run automatically at the same time every morning using Task Scheduler.
 
 In order to do this, you will need to follow the following steps:
+
 1. Make sure your computer will be on at the scheduled time every day (it's okay if it's asleep - see Step 11)
-2. Task Scheduler may not run automatic tasks on accounts that 
+2. Task Scheduler may not run automatic tasks on accounts that
 3. Open Task Scheduler, which should be included with Windows
 4. Click "Create Task" in the right sidebar
 5. In the "General" tab, check "Run whether user is logged in or not" if you want this task to run even when you are logged out
@@ -85,7 +94,9 @@ In order to do this, you will need to follow the following steps:
 15. If you have any issues with this setup, please feel free to reach out to me on Github or on Reddit at u/ChristianMay21, but please understand that it may take me a while to get back to you.
 
 ## Potential improvements
+
 I would love to make this software usable by as many people as possible - that means making it:
+
 - Stable
 - Cross-platform
 - Configurable
